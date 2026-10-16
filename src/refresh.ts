@@ -19,6 +19,7 @@ export interface Env {
   ADMIN_TOKEN?: string;
   REFRESH_CHUNK?: string;
   STALE_HOURS?: string;
+  REFRESH_WINDOW_UTC?: string; // "HH:MM" UTC start of the daily cron window (after the close in every DST state)
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   ALLOWED_EMAILS?: string;
@@ -73,6 +74,22 @@ export interface RefreshResult {
   ai?: { brief: boolean; notes: number; errors: string[] } | string;
 }
 
+// A ticker is stale when fetched more than STALE_HOURS ago, or, once today's cron window has started
+// (REFRESH_WINDOW_UTC), when fetched before that start. Without the second rule an off-schedule refresh during the
+// day (an admin run, a backfill) leaves every ticker "fresh" when the evening window opens, the window fetches
+// nothing and that session's close is skipped.
+export function freshnessCutoff(env: Env, staleHours: number, now = Date.now()): string {
+  let cut = now - staleHours * 3600 * 1000;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(env.REFRESH_WINDOW_UTC ?? "");
+  if (m) {
+    const start = new Date(now);
+    start.setUTCHours(Number(m[1]), Number(m[2]), 0, 0);
+    if (start.getTime() > now) start.setUTCDate(start.getUTCDate() - 1);
+    cut = Math.max(cut, start.getTime());
+  }
+  return new Date(cut).toISOString();
+}
+
 export async function runRefresh(env: Env, opts: { limit?: number; force?: boolean; symbols?: string[]; range?: string } = {}): Promise<RefreshResult> {
   const db = env.DB;
   const startedAt = new Date().toISOString();
@@ -80,7 +97,7 @@ export async function runRefresh(env: Env, opts: { limit?: number; force?: boole
   const staleHours = Number(env.STALE_HOURS ?? 18);
   await ensureUniverse(db);
 
-  const cutoff = new Date(Date.now() - staleHours * 3600 * 1000).toISOString();
+  const cutoff = freshnessCutoff(env, staleHours);
   let targets: TickerRow[];
   if (opts.symbols?.length) {
     const qs = opts.symbols.map(() => "?").join(",");

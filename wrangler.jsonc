@@ -37,6 +37,8 @@
     "SSO_HUB": "https://equity.0xkaz.com",
     "REFRESH_CHUNK": "25",
     "STALE_HOURS": "18",
+    // first cron of the daily window (UTC): tickers fetched before it are refreshed in the window (src/refresh.ts freshnessCutoff)
+    "REFRESH_WINDOW_UTC": "20:20",
     "EMAIL_FROM": "notifications@equity.0xkaz.com",
     "PUBLIC_URL": "https://ar-equity.0xkaz.com",
     // OAuth client ID is public; the client secret must be set with `wrangler secret put GOOGLE_CLIENT_SECRET`.
