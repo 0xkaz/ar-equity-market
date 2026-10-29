@@ -134,7 +134,7 @@ export function writeBrief(s: MarketSnapshot): string {
   const d = new Date(s.date + "T00:00:00Z");
   const dateJa = `${d.getUTCMonth() + 1}月${d.getUTCDate()}日(${WD[d.getUTCDay()]})`;
   const lines: string[] = [];
-  if (!s.index && s.indexStale) lines.push(`MERVAL（メルバル指数）はデータ提供元の配信が止まっており、最新の値は ${s.indexStale.date} の ${s.indexStale.close.toFixed(2)} です。`);
+  if (!s.index && s.indexStale) lines.push(`MERVAL（メルバル指数）は 2026-10-19 から運営が S&P から MSCI に移り（MSCI MERVAL）、旧指数の値は ${s.indexStale.date} の ${s.indexStale.close.toFixed(2)} が最後です。新指数は履歴が揃いしだい表示します。`);
   if (s.index) {
     const i = s.index;
     const tone = i.chg1d == null ? "" : i.chg1d > 0.5 ? "上昇" : i.chg1d < -0.5 ? "下落" : "小動き";

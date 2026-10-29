@@ -132,7 +132,7 @@
     app.innerHTML = `
       <h1>マーケット概況 <span class="muted" style="font-size:13px;font-weight:400">${s.date} 時点（更新 ${fmt.date(d.generatedAt)}）</span></h1>
       <div class="tiles">
-        <div class="tile"><div class="label">S&P MERVAL（メルバル指数）</div><div class="value">${i ? fmt.num(i.close) : "–"}</div><div class="sub">${!i && s.indexStale ? `配信停止中（最新 ${esc(s.indexStale.date)}: ${fmt.num(s.indexStale.close)}）` : ""}${i ? fmt.pct(i.chg1d) : ""} 1日 / ${i ? fmt.pct(i.chg1w) : ""} 週</div></div>
+        <div class="tile"><div class="label">S&P MERVAL（メルバル指数）</div><div class="value">${i ? fmt.num(i.close) : "–"}</div><div class="sub">${!i && s.indexStale ? `10/19 から MSCI MERVAL に移行。旧指数は ${esc(s.indexStale.date)} の ${fmt.num(s.indexStale.close)} が最後` : ""}${i ? fmt.pct(i.chg1d) : ""} 1日 / ${i ? fmt.pct(i.chg1w) : ""} 週</div></div>
         <div class="tile"><div class="label">MERVAL 月間 / 年初来</div><div class="value">${i ? fmt.pct(i.chg1m) : "–"}</div><div class="sub">YTD ${i ? fmt.pct(i.chgYtd) : ""} / 1年 ${i ? fmt.pct(i.chg12m) : ""}</div></div>
         <div class="tile"><div class="label">52週高値からの距離</div><div class="value">${i ? fmt.pct(i.fromHi52) : "–"}</div><div class="sub">${i ? `${fmt.num(i.lo52)} – ${fmt.num(i.hi52)}` : ""}</div></div>
         <div class="tile"><div class="label">上昇 / 下落</div><div class="value"><span class="up">${b.advancers}</span> / <span class="down">${b.decliners}</span></div><div class="sub">中央値 ${fmt.pct(b.medianChg1d)}（${b.n} 銘柄）</div></div>
