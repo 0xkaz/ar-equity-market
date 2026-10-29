@@ -14,6 +14,8 @@ export interface ScreenerRow {
 export interface MarketSnapshot {
   date: string;
   index: { close: number; chg1d: number | null; chg1w: number | null; chg1m: number | null; chg3m: number | null; chgYtd: number | null; chg12m: number | null; hi52: number | null; lo52: number | null; fromHi52: number | null; rsi14: number | null; vsSma50: number | null; vsSma200: number | null } | null;
+  // the index's latest data when it is too old to stand for this date (e.g. Yahoo stopped publishing ^MERV closes after 2026-10-16)
+  indexStale?: { close: number; date: string } | null;
   breadth: {
     n: number; advancers: number; decliners: number; unchanged: number;
     aboveSma20: number; aboveSma50: number; aboveSma200: number;
@@ -47,7 +49,10 @@ const r2 = (v: number | null) => (v == null ? null : Math.round(v * 100) / 100);
 
 export function buildSnapshot(rows: ScreenerRow[], indexRow: ScreenerRow | null, date: string): MarketSnapshot {
   const eq = rows.filter((r) => r.kind === "equity" && r.m.date === date);
-  const im = indexRow?.m ?? null;
+  const im0 = indexRow?.m ?? null;
+  // an index more than 4 days older than the snapshot is not shown as the day's index (it was repeated as "today" for 10+ days)
+  const idxFresh = !!im0 && (Date.parse(date) - Date.parse(im0.date)) / 86400000 <= 4;
+  const im = idxFresh ? im0 : null;
   const index = im ? {
     close: im.close, chg1d: r2(im.chg1d), chg1w: r2(im.chg1w), chg1m: r2(im.chg1m), chg3m: r2(im.chg3m),
     chgYtd: r2(im.chgYtd), chg12m: r2(im.chg12m), hi52: im.hi52, lo52: im.lo52, fromHi52: r2(im.fromHi52),
@@ -99,7 +104,7 @@ export function buildSnapshot(rows: ScreenerRow[], indexRow: ScreenerRow | null,
     if (signalExamples[s].length < 6) signalExamples[s].push(`${shortName(r)}(${r.code})`);
   }
 
-  const snap: MarketSnapshot = { date, index, breadth, sectors, gainers, losers, signalCounts, signalExamples, brief: "" };
+  const snap: MarketSnapshot = { date, index, indexStale: im0 && !idxFresh ? { close: im0.close, date: im0.date } : null, breadth, sectors, gainers, losers, signalCounts, signalExamples, brief: "" };
   snap.brief = writeBrief(snap);
   return snap;
 }
@@ -129,6 +134,7 @@ export function writeBrief(s: MarketSnapshot): string {
   const d = new Date(s.date + "T00:00:00Z");
   const dateJa = `${d.getUTCMonth() + 1}月${d.getUTCDate()}日(${WD[d.getUTCDay()]})`;
   const lines: string[] = [];
+  if (!s.index && s.indexStale) lines.push(`MERVAL（メルバル指数）はデータ提供元の配信が止まっており、最新の値は ${s.indexStale.date} の ${s.indexStale.close.toFixed(2)} です。`);
   if (s.index) {
     const i = s.index;
     const tone = i.chg1d == null ? "" : i.chg1d > 0.5 ? "上昇" : i.chg1d < -0.5 ? "下落" : "小動き";
