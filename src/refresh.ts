@@ -1,7 +1,8 @@
 // Data refresh jobs: fetch prices from Yahoo for stale tickers, recompute metrics,
 // build the market snapshot once the whole universe is fresh.
 import { UNIVERSE, symbolFor, INDEX_SYMBOL } from "./universe";
-import { fetchChart, fetchFundamentals, type Bar } from "./yahoo";
+import { fetchChart, fetchFundamentals, type Bar, type ChartMeta } from "./yahoo";
+import { fetchHistory } from "./tradingview";
 import { takeChartStats, isPreClose } from "./core/chart-bars";
 import { takeGuardStats } from "./core/ai-guard";
 import { computeMetrics, type Metrics } from "./metrics";
@@ -122,6 +123,12 @@ export async function runRefresh(env: Env, opts: { limit?: number; force?: boole
   if (targets.length > 0) {
     // 1) Fetch from Yahoo in parallel. First-time tickers get 2y of history, otherwise 1mo (overlaps & repairs late revisions).
     const fetched = await Promise.allSettled(targets.map(async (t) => {
+      if (t.symbol === INDEX_SYMBOL) {
+        // the index comes from TradingView (no Yahoo history for MSCI MERVAL): a month of bars, or ~2.5 years the first time
+        const h = await fetchHistory(INDEX_SYMBOL, t.last_price_date ? 40 : 600);
+        const meta: ChartMeta = { symbol: INDEX_SYMBOL, longName: h.meta.description ?? "MSCI Merval Index", currency: "ARS" };
+        return { t, meta, bars: h.bars.map((b) => ({ ...b, volume: 0 })) as Bar[] };
+      }
       const range = opts.range ?? (t.last_price_date ? "1mo" : "2y");
       const { meta, bars } = await fetchChart(t.symbol, range);
       return { t, meta, bars };

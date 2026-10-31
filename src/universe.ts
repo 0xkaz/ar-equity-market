@@ -1,4 +1,4 @@
-// Tracked universe for AR Equity Monitor: S&P MERVAL + liquid BYMA names.
+// Tracked universe for AR Equity Monitor: MSCI MERVAL + liquid BYMA names.
 // code = BYMA stock code (Yahoo symbol is `${code}.BA`). Names are refreshed from Yahoo;
 // the comments here are hints for readability only.
 export interface UniverseEntry {
@@ -11,12 +11,14 @@ export interface UniverseEntry {
 export type Sector =
   | "Banking" | "Financials" | "Energy" | "Materials" | "Telecom" | "Staples" | "Consumer" | "Industrial" | "Property" | "Index";
 
-export const INDEX_SYMBOL = "^MERV";
+// MSCI MERVAL from TradingView (src/tradingview.ts). Until 2026-10-16 the index was S&P MERVAL (Yahoo ^MERV, stopped);
+// MSCI took it over on 10-19 and back-calculated it to 2024 with 100,000 on 10-16.
+export const INDEX_SYMBOL = "BCBA:MMSCI";
 export const INDEX_CODE = "MERVAL";
 export const EXCHANGE_SUFFIX = ".BA";
 
 export const UNIVERSE: UniverseEntry[] = [
-  { code: "MERVAL", sector: "Index", kind: "index", name: "S&P MERVAL" },
+  { code: "MERVAL", sector: "Index", kind: "index", name: "MSCI MERVAL" },
   // Banking
   { code: "GGAL", sector: "Banking" }, // Grupo Financiero Galicia S.A.
   { code: "BMA", sector: "Banking" }, // Banco Macro S.A.
